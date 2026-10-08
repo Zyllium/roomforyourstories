@@ -1,0 +1,6 @@
+const encoder=new TextEncoder();
+function hex(value:ArrayBuffer){return Array.from(new Uint8Array(value),v=>v.toString(16).padStart(2,'0')).join('');}
+export async function equalSecret(a:string,b:string){const digest=async(s:string)=>new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(s)));const [left,right]=await Promise.all([digest(a),digest(b)]);let difference=0;for(let i=0;i<left.length;i++)difference|=left[i]^right[i];return difference===0;}
+async function signature(value:string,secret:string){const key=await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);return hex(await crypto.subtle.sign('HMAC',key,encoder.encode(value)));}
+export async function createSession(secret:string,now=Date.now()){const expires=Math.floor(now/1000)+8*60*60;const value=`${expires}.${crypto.randomUUID()}`;return `${value}.${await signature(value,secret)}`;}
+export async function validSession(value:string,secret:string,now=Date.now()){const parts=value.split('.');if(parts.length!==3||!/^\d{10}$/.test(parts[0])||!/^[-a-f0-9]{36}$/.test(parts[1])||! /^[a-f0-9]{64}$/.test(parts[2]))return false;const expires=Number(parts[0]);if(expires<=Math.floor(now/1000)||expires>Math.floor(now/1000)+8*60*60)return false;return equalSecret(parts[2],await signature(`${parts[0]}.${parts[1]}`,secret));}

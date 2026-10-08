@@ -1,0 +1,1 @@
+{"version":"2.0.0","tasks":[{"label":"Preview website","type":"shell","command":"pnpm run dev","problemMatcher":[]},{"label":"Publish website","type":"shell","command":"pnpm run deploy","problemMatcher":[],"presentation":{"reveal":"always","panel":"dedicated"}}]}
